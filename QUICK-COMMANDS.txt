@@ -1,0 +1,63 @@
+═══════════════════════════════════════════════════════════
+ SCREEN SHARE - QUICK COMMANDS
+═══════════════════════════════════════════════════════════
+
+GitHub: https://github.com/Jitishkumar/SCREEN-SHARE3
+
+───────────────────────────────────────────────────────────
+ ON THIS COMPUTER (Current Mac)
+───────────────────────────────────────────────────────────
+
+▶ START THE APP:
+  cd "/Users/jitishkumar/Desktop/screen share3"
+  ./start.sh
+
+▶ PUSH CHANGES TO GITHUB:
+  cd "/Users/jitishkumar/Desktop/screen share3"
+  git add .
+  git commit -m "your message"
+  git push origin main
+
+▶ REINSTALL DEPENDENCIES (if needed):
+  cd server && npm install
+  cd ../desktop-app && npm install
+
+───────────────────────────────────────────────────────────
+ ON NEW COMPUTER (Clone from GitHub)
+───────────────────────────────────────────────────────────
+
+▶ FIRST TIME SETUP:
+  git clone https://github.com/Jitishkumar/SCREEN-SHARE3.git
+  cd SCREEN-SHARE3
+  cd server && npm install
+  cd ../desktop-app && npm install
+  cd ..
+
+▶ START THE APP:
+  ./start.sh
+
+▶ PULL LATEST CHANGES:
+  git pull origin main
+  cd server && npm install
+  cd ../desktop-app && npm install
+
+───────────────────────────────────────────────────────────
+ WHAT TO EXPECT
+───────────────────────────────────────────────────────────
+
+After starting, you'll see:
+  🔗 Mobile Link: http://10.XXX.XXX.XXX:3000
+  🆔 Connection ID: XXXXXXXXXXXXX
+
+Copy these and use on your phone!
+
+───────────────────────────────────────────────────────────
+ IMPORTANT!
+───────────────────────────────────────────────────────────
+
+✓ node_modules/ is NOT in GitHub (too large)
+✓ Always run "npm install" after cloning
+✓ Dependencies must be installed on each computer
+✓ Push code changes with git add/commit/push
+
+═══════════════════════════════════════════════════════════
