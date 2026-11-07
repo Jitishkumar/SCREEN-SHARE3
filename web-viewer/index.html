@@ -441,6 +441,7 @@
 
     <div class="info">
       <p>🔒 Undetectable • 🆓 Free Forever • 👁️ View Your Mac Screen</p>
+      <p id="serverInfo" style="font-size: 10px; opacity: 0.7; margin-top: 5px;">Server: Loading...</p>
     </div>
   </div>
 
@@ -451,8 +452,20 @@
   <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
 
   <script>
-    // Configuration - CHANGE THIS to your Mac's IP!
-    const SERVER_URL = 'http://10.210.148.79:3000';
+    // Configuration - Automatically use the current server URL
+    // This gets the IP from the URL you're accessing (e.g., http://10.120.142.4:3000)
+    const SERVER_URL = window.location.origin;
+    
+    console.log('🚀 ScreenShare Pro Web Viewer');
+    console.log('📡 Server:', SERVER_URL);
+    
+    // Display server URL on page
+    window.addEventListener('DOMContentLoaded', () => {
+      const serverInfo = document.getElementById('serverInfo');
+      if (serverInfo) {
+        serverInfo.textContent = `Server: ${SERVER_URL}`;
+      }
+    });
     
     let socket;
     let peer;
