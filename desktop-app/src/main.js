@@ -46,17 +46,27 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true
+      enableRemoteModule: true,
+      backgroundThrottling: false
     },
     title: 'ScreenShare Pro - Desktop',
-    // Hide from dock for stealth mode (optional)
-    // show: false
+    show: false // Don't show until ready
   });
 
   mainWindow.loadFile('src/index.html');
 
+  // Show window when ready
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
+
   // Open DevTools for debugging
   mainWindow.webContents.openDevTools();
+  
+  // Handle window close
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
 
 // Request screen capture permissions on Mac
@@ -133,7 +143,9 @@ function initializeSocket() {
     console.log('🆔 Connection ID: ' + socket.id);
     console.log('='.repeat(60) + '\n');
     
-    mainWindow.webContents.send('connection-status', { connected: true, id: socket.id });
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('connection-status', { connected: true, id: socket.id });
+    }
     
     // Register as desktop
     socket.emit('register-desktop', {
@@ -150,25 +162,33 @@ function initializeSocket() {
 
   socket.on('disconnect', () => {
     console.log('❌ Disconnected from server');
-    mainWindow.webContents.send('connection-status', { connected: false });
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('connection-status', { connected: false });
+    }
   });
 
   // Handle mobile device connection
   socket.on('mobile-connected', (data) => {
     console.log('📱 Mobile device connected:', data.mobileId);
-    mainWindow.webContents.send('mobile-connected', data);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('mobile-connected', data);
+    }
   });
 
   // Handle mode changes from mobile
   socket.on('mode-change', (data) => {
     console.log('🔄 Mode changed to:', data.mode);
-    mainWindow.webContents.send('mode-change', data);
-    handleModeChange(data.mode);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('mode-change', data);
+      handleModeChange(data.mode);
+    }
   });
 
   // WebRTC signaling
   socket.on('signal', (data) => {
-    mainWindow.webContents.send('signal', data);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('signal', data);
+    }
   });
 }
 
@@ -241,7 +261,14 @@ app.whenReady().then(async () => {
   }
   
   createWindow();
-  initializeSocket();
+  
+  // Initialize socket after window is ready
+  mainWindow.webContents.once('did-finish-load', () => {
+    console.log('🖥️  Window loaded, initializing socket...');
+    setTimeout(() => {
+      initializeSocket();
+    }, 1000);
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
