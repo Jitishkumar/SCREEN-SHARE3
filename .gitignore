@@ -1,0 +1,72 @@
+# Node modules - never upload these (can be recreated with npm install)
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.history/
+
+# Build outputs
+dist/
+build/
+out/
+*.app
+*.exe
+*.dmg
+*.pkg
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Package lock files (optional - you can keep package-lock.json if you want)
+# package-lock.json
+
+# Electron specific - built/compiled files
+desktop-app/dist/
+desktop-app/out/
+desktop-app/build/
+
+# Any large binary files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# System and runtime files
+.npm
+.eslintcache
+.node_repl_history
+*.tgz
+.yarn-integrity
+.cache/

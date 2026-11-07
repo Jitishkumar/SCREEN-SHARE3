@@ -1,0 +1,64 @@
+🚀 HOW TO START SCREEN SHARING - SUPER SIMPLE
+================================================
+
+METHOD 1: Single Command (Easiest!)
+-----------------------------------
+Just run this in Terminal:
+
+    ./start.sh
+
+(Make sure you're in the project folder first)
+
+
+METHOD 2: Manual (2 Commands)
+-----------------------------
+Open 2 Terminal windows:
+
+Terminal 1:
+    cd server && node index.js
+
+Terminal 2:
+    cd desktop-app && npm start
+
+
+WHAT TO LOOK FOR:
+-----------------
+Terminal 2 will show:
+
+    ============================================================
+    📱 MOBILE ACCESS INFO (Copy these)
+    ============================================================
+    🔗 Mobile Link: http://10.50.31.163:3000
+    🆔 Connection ID: k6a8fxn0OiruxAY8AAAA
+    ============================================================
+
+COPY BOTH THE LINK AND CONNECTION ID!
+
+
+ON YOUR PHONE:
+--------------
+1. Open Chrome browser
+2. Paste the Mobile Link
+3. Enter the Connection ID
+4. Tap Connect
+5. Done! 🎉
+
+
+DESKTOP APP:
+-----------
+1. Select which screen to share
+2. Click "Start Sharing"
+3. Your screen appears on phone!
+
+
+TO STOP:
+--------
+Press Ctrl+C in both terminals
+(or if using start.sh, just press Ctrl+C once)
+
+
+THAT'S IT!
+----------
+The terminal always shows you what to copy.
+Super simple! 💪
+

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug - ScreenShare Pro</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #0f0;
+    }
+    .info { margin: 10px 0; padding: 10px; background: #2a2a2a; }
+    .status { color: #ff0; }
+    .error { color: #f00; }
+    .success { color: #0f0; }
+  </style>
+</head>
+<body>
+  <h1>ScreenShare Pro - Debug Info</h1>
+  <div id="output"></div>
+  
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const output = document.getElementById('output');
+    const SERVER_URL = 'http://10.210.148.79:3000';
+    
+    function log(msg, type = 'info') {
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      output.appendChild(div);
+    }
+    
+    log('Starting debug...', 'status');
+    log('Server URL: ' + SERVER_URL, 'info');
+    
+    // Fetch server status
+    fetch(SERVER_URL + '/api/status')
+      .then(r => r.json())
+      .then(data => {
+        log('Server Status: ' + JSON.stringify(data, null, 2), 'success');
+        log(`Desktop connections: ${data.connections.desktop}`, 'info');
+        log(`Mobile connections: ${data.connections.mobile}`, 'info');
+      })
+      .catch(err => {
+        log('Server fetch error: ' + err, 'error');
+      });
+    
+    // Try socket connection
+    log('Connecting to socket...', 'status');
+    const socket = io(SERVER_URL);
+    
+    socket.on('connect', () => {
+      log('Socket connected! ID: ' + socket.id, 'success');
+      socket.emit('register-mobile', { test: true });
+    });
+    
+    socket.on('disconnect', () => {
+      log('Socket disconnected', 'error');
+    });
+    
+    socket.on('registered', (data) => {
+      log('Registered: ' + JSON.stringify(data), 'success');
+    });
+    
+    socket.on('available-desktops', (data) => {
+      log('Available desktops: ' + JSON.stringify(data), 'success');
+      if (data.desktops && data.desktops.length > 0) {
+        log('Found ' + data.desktops.length + ' desktop(s)', 'success');
+        data.desktops.forEach(id => log('  - Desktop ID: ' + id, 'info'));
+      } else {
+        log('No desktops connected!', 'error');
+      }
+    });
+    
+    socket.on('error', (err) => {
+      log('Socket error: ' + err, 'error');
+    });
+    
+    setInterval(() => {
+      log('Pinging server...', 'status');
+    }, 10000);
+  </script>
+</body>
+</html>

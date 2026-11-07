@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ScreenShare Prob -jitish</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      max-width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .status {
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      display: inline-block;
+    }
+
+    .status.connected {
+      background: rgba(76, 175, 80, 0.3);
+    }
+
+    .status.disconnected {
+      background: rgba(244, 67, 54, 0.3);
+    }
+
+    .connection-panel {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .connection-panel input {
+      width: 100%;
+      max-width: 400px;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-family: monospace;
+    }
+
+    .connection-panel button {
+      padding: 15px 40px;
+      border: none;
+      border-radius: 10px;
+      background: #4CAF50;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .connection-panel button:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+    }
+
+    .connection-panel button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .video-container {
+      flex: 1;
+      background: black;
+      position: relative;
+      display: none;
+    }
+
+    .video-container.active {
+      display: block;
+    }
+
+    #remoteVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .control-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: white;
+      color: #667eea;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .control-btn:hover {
+      background: #f0f0f0;
+      transform: scale(1.05);
+    }
+
+    .control-btn.disconnect {
+      background: #f44336;
+      color: white;
+    }
+
+    .control-btn.fullscreen {
+      background: #2196F3;
+      color: white;
+    }
+
+    .control-btn.chat {
+      background: #4CAF50;
+      color: white;
+      position: relative;
+    }
+
+    /* Chat integrated into video view */
+    .chat-overlay {
+      position: absolute;
+      top: 60px;
+      right: 10px;
+      width: 90%;
+      max-width: 320px;
+      height: 450px;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      transition: all 0.3s ease;
+    }
+
+    .chat-overlay.open {
+      display: flex;
+    }
+
+    /* Chat fullscreen mode */
+    .chat-overlay.fullscreen {
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 80px;
+      width: calc(100% - 20px);
+      max-width: none;
+      height: auto;
+    }
+
+    .chat-overlay.fullscreen .chat-messages {
+      font-size: 16px;
+    }
+
+    .chat-overlay.fullscreen .chat-message .text {
+      font-size: 16px;
+    }
+
+    .chat-header {
+      background: #667eea;
+      color: white;
+      padding: 12px;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header h3 {
+      margin: 0;
+      font-size: 16px;
+      flex: 1;
+    }
+
+    .chat-header-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-fullscreen-btn,
+    .chat-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chat-fullscreen-btn:hover,
+    .chat-close:hover {
+      opacity: 0.8;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background: #f5f5f5;
+    }
+
+    .chat-message {
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      word-wrap: break-word;
+    }
+
+    .chat-message.own {
+      background: #e3f2fd;
+      margin-left: 20px;
+    }
+
+    .chat-message .sender {
+      font-weight: bold;
+      font-size: 12px;
+      color: #667eea;
+      margin-bottom: 4px;
+    }
+
+    .chat-message .text {
+      font-size: 14px;
+      color: #333;
+      white-space: pre-wrap;  /* Preserve line breaks and spacing */
+      word-wrap: break-word;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .chat-message .time {
+      font-size: 10px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    .chat-input-container {
+      padding: 12px;
+      background: white;
+      border-radius: 0 0 10px 10px;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 14px;
+      outline: none;
+      resize: none;
+      min-height: 40px;
+      max-height: 100px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .chat-input:focus {
+      border-color: #667eea;
+    }
+
+    .chat-send-btn {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .chat-send-btn:active {
+      background: #45a049;
+    }
+
+    .chat-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #f44336;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .info {
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📱 ScreenShare Pro</h1>
+      <div id="status" class="status disconnected">Disconnected</div>
+    </div>
+
+    <!-- Connection Panel -->
+    <div id="connectionPanel" class="connection-panel">
+      <h2>Connect to Desktop</h2>
+      <p style="margin: 20px 0; font-size: 14px; opacity: 0.9;">
+        Enter the Connection ID from your desktop app
+      </p>
+      <input 
+        type="text" 
+        id="connectionId" 
+        placeholder="Enter Connection ID"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+      <br>
+      <button id="connectBtn" onclick="connect()">🔗 Connect</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <p>Connecting to desktop...</p>
+    </div>
+
+    <!-- Video Container -->
+    <div id="videoContainer" class="video-container">
+      <video id="remoteVideo" autoplay playsinline></video>
+      
+      <!-- Chat Overlay (inside video) -->
+      <div id="chatOverlay" class="chat-overlay">
+        <div class="chat-header">
+          <h3>💬 Chat</h3>
+          <div class="chat-header-buttons">
+            <button class="chat-fullscreen-btn" onclick="toggleChatFullscreen()" title="Toggle Fullscreen">
+              <span id="chatFullscreenIcon">⛶</span>
+            </button>
+            <button class="chat-close" onclick="toggleChat()">×</button>
+          </div>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+          <div style="text-align: center; color: #999; font-size: 12px; padding: 20px;">
+            Chat with other viewers!
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <textarea 
+            id="chatInput" 
+            class="chat-input" 
+            placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+            rows="1"
+            onkeydown="handleChatKeydown(event)"
+          ></textarea>
+          <button class="chat-send-btn" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+      
+      <div class="controls">
+        <button class="control-btn fullscreen" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+        <button class="control-btn chat" onclick="toggleChat()">
+          💬 Chat
+          <span id="chatBadge" class="chat-badge" style="display: none;">0</span>
+        </button>
+        <button class="control-btn disconnect" onclick="disconnect()">⏹️ Disconnect</button>
+      </div>
+    </div>
+
+    <div class="info">
+      <p>🔒 Undetectable • 🆓 Free Forever • 👁️ View Your Mac Screen</p>
+    </div>
+  </div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  
+  <!-- SimplePeer -->
+  <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+
+  <script>
+    // Configuration - CHANGE THIS to your Mac's IP!
+    const SERVER_URL = 'http://10.210.148.79:3000';
+    
+    let socket;
+    let peer;
+    let connected = false;
+    let mySocketId = null;
+    let unreadMessages = 0;
+    let isChatOpen = false;
+
+    // UI Elements
+    const statusEl = document.getElementById('status');
+    const connectionPanel = document.getElementById('connectionPanel');
+    const loadingEl = document.getElementById('loading');
+    const videoContainer = document.getElementById('videoContainer');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const connectionIdInput = document.getElementById('connectionId');
+    const connectBtn = document.getElementById('connectBtn');
+
+    // Update status
+    function updateStatus(text, isConnected) {
+      statusEl.textContent = text;
+      statusEl.className = 'status ' + (isConnected ? 'connected' : 'disconnected');
+    }
+
+    // Initialize Socket.IO
+    function initSocket() {
+      console.log('Initializing socket to:', SERVER_URL);
+      
+      socket = io(SERVER_URL, {
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 10,
+        transports: ['websocket', 'polling'] // Try websocket first
+      });
+
+      socket.on('connect', () => {
+        console.log('✅ Connected to server:', socket.id);
+        updateStatus('Connected to server', false);
+        alert('Socket connected! ID: ' + socket.id); // DEBUG
+        
+        // Register as mobile
+        socket.emit('register-mobile', {
+          deviceInfo: {
+            platform: 'web',
+            userAgent: navigator.userAgent
+          }
+        });
+      });
+
+      socket.on('disconnect', () => {
+        console.log('❌ Disconnected from server');
+        updateStatus('Disconnected', false);
+        if (connected) {
+          disconnect(true);  // Auto-disconnect, skip password
+        }
+      });
+
+      socket.on('registered', (data) => {
+        console.log('✅ Registered as:', data.type);
+        mySocketId = socket.id;
+      });
+
+      socket.on('desktop-connected', (data) => {
+        console.log('✅ Paired with desktop:', data.desktopId);
+        updateStatus('Paired with desktop', true);
+        initWebRTC();
+      });
+
+      socket.on('pairing-failed', (data) => {
+        console.error('❌ Pairing failed:', data.error);
+        alert('Connection failed: ' + data.error);
+        hideLoading();
+      });
+
+      socket.on('signal', (data) => {
+        console.log('📡 Received signal from desktop');
+        if (peer && data.signal) {
+          peer.signal(data.signal);
+        }
+      });
+
+      socket.on('peer-disconnected', (data) => {
+        console.log('🔌 Desktop disconnected');
+        alert('Desktop disconnected');
+        disconnect(true);  // Auto-disconnect, skip password
+      });
+
+      // Listen for chat messages from other mobile users
+      socket.on('mobile-chat-broadcast', (data) => {
+        console.log('💬 Chat message received:', data);
+        const isOwn = data.senderId === socket.id;
+        displayMessage(data, isOwn);
+      });
+    }
+
+    // Initialize WebRTC
+    function initWebRTC() {
+      peer = new SimplePeer({
+        initiator: false,
+        trickle: false,
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
+        }
+      });
+
+      peer.on('signal', (data) => {
+        console.log('📡 Sending signal to desktop');
+        socket.emit('signal', {
+          signal: data,
+          type: 'answer'
+        });
+      });
+
+      peer.on('stream', (stream) => {
+        console.log('✅ Received stream from desktop!');
+        remoteVideo.srcObject = stream;
+        showVideo();
+        updateStatus('✅ Connected - Viewing Desktop', true);
+        connected = true;
+      });
+
+      peer.on('connect', () => {
+        console.log('✅ P2P connection established!');
+      });
+
+      peer.on('error', (err) => {
+        console.error('❌ Peer error:', err);
+        alert('Connection error: ' + err.message);
+        hideLoading();
+      });
+
+      peer.on('close', () => {
+        console.log('🔌 Connection closed');
+        disconnect(true);  // Auto-disconnect, skip password
+      });
+    }
+
+    // Connect to desktop
+    function connect() {
+      const desktopId = connectionIdInput.value.trim();
+      
+      if (!desktopId) {
+        alert('Please enter a Connection ID');
+        return;
+      }
+
+      console.log('🔗 Connecting to desktop:', desktopId);
+      alert('Connecting to: ' + desktopId); // DEBUG
+      showLoading();
+      
+      // Initialize socket if not already
+      if (!socket) {
+        console.log('Socket not initialized, initializing now...');
+        initSocket();
+      }
+
+      // Wait a bit for socket to connect
+      setTimeout(() => {
+        console.log('Sending pair-with-desktop event...');
+        alert('Sending pair request...'); // DEBUG
+        socket.emit('pair-with-desktop', { desktopId });
+      }, 1000); // Increased timeout
+    }
+
+    // Disconnect with password protection
+    function disconnect(skipPasswordCheck = false) {
+      // If skipPasswordCheck is true, disconnect without asking (for auto-disconnects)
+      if (!skipPasswordCheck) {
+        // Ask for password before disconnecting
+        const password = prompt('🔒 Enter password to disconnect:');
+        
+        if (password !== '1234') {
+          if (password !== null) {  // null means user clicked Cancel
+            alert('❌ Wrong password! Cannot disconnect.');
+          }
+          return;  // Don't disconnect if password is wrong or cancelled
+        }
+      }
+      
+      // Password correct or auto-disconnect, proceed
+      if (peer) {
+        peer.destroy();
+        peer = null;
+      }
+      
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+      }
+      
+      remoteVideo.srcObject = null;
+      connected = false;
+      
+      hideVideo();
+      updateStatus('Disconnected', false);
+      
+      // Close chat if open
+      if (isChatOpen) {
+        chatOverlay.classList.remove('open');
+        isChatOpen = false;
+      }
+    }
+
+    // Toggle fullscreen
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        videoContainer.requestFullscreen().catch(err => {
+          console.error('Fullscreen error:', err);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // UI Helpers
+    function showLoading() {
+      connectionPanel.classList.add('hidden');
+      loadingEl.classList.remove('hidden');
+      connectBtn.disabled = true;
+    }
+
+    function hideLoading() {
+      loadingEl.classList.add('hidden');
+      connectionPanel.classList.remove('hidden');
+      connectBtn.disabled = false;
+    }
+
+    function showVideo() {
+      connectionPanel.classList.add('hidden');
+      loadingEl.classList.add('hidden');
+      videoContainer.classList.add('active');
+    }
+
+    function hideVideo() {
+      videoContainer.classList.remove('active');
+      connectionPanel.classList.remove('hidden');
+    }
+
+    // Handle Enter key in input
+    connectionIdInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        connect();
+      }
+    });
+
+    // Keep screen awake
+    if ('wakeLock' in navigator) {
+      let wakeLock = null;
+      
+      async function requestWakeLock() {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('🔋 Screen wake lock active');
+        } catch (err) {
+          console.error('Wake lock error:', err);
+        }
+      }
+      
+      // Request when video starts
+      remoteVideo.addEventListener('play', requestWakeLock);
+    }
+
+    // Handle visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && connected) {
+        console.log('📱 App in background');
+      } else if (connected) {
+        console.log('📱 App in foreground');
+      }
+    });
+
+    // Initialize
+    console.log('🚀 ScreenShare Pro Web Viewer');
+    console.log('📡 Server:', SERVER_URL);
+    updateStatus('Ready to connect', false);
+
+    // Check URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoConnectId = urlParams.get('id');
+    if (autoConnectId) {
+      connectionIdInput.value = autoConnectId;
+      // Auto-connect after a short delay
+      setTimeout(() => connect(), 1000);
+    }
+
+    // ============================================
+    // CHAT FUNCTIONS
+    // ============================================
+    
+    const chatOverlay = document.getElementById('chatOverlay');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const chatBadge = document.getElementById('chatBadge');
+    const chatFullscreenIcon = document.getElementById('chatFullscreenIcon');
+    let isChatFullscreen = false;
+
+    // Toggle chat window
+    function toggleChat() {
+      isChatOpen = !isChatOpen;
+      if (isChatOpen) {
+        chatOverlay.classList.add('open');
+        unreadMessages = 0;
+        chatBadge.style.display = 'none';
+      } else {
+        chatOverlay.classList.remove('open');
+        // Exit fullscreen when closing
+        if (isChatFullscreen) {
+          isChatFullscreen = false;
+          chatOverlay.classList.remove('fullscreen');
+          chatFullscreenIcon.textContent = '⛶';
+        }
+      }
+    }
+
+    // Toggle chat fullscreen
+    function toggleChatFullscreen() {
+      isChatFullscreen = !isChatFullscreen;
+      if (isChatFullscreen) {
+        chatOverlay.classList.add('fullscreen');
+        chatFullscreenIcon.textContent = '⛶'; // Could use different icon
+      } else {
+        chatOverlay.classList.remove('fullscreen');
+        chatFullscreenIcon.textContent = '⛶';
+      }
+    }
+
+    // Handle Enter key - send on Enter, new line on Shift+Enter
+    function handleChatKeydown(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault(); // Prevent new line
+        sendMessage();
+      }
+      // If Shift+Enter, allow default behavior (new line)
+    }
+
+    // Send message
+    function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message || !socket) return;
+
+      // Send to all mobile users via server
+      socket.emit('mobile-chat', {
+        text: message,
+        timestamp: Date.now(),
+        senderId: socket.id
+      });
+
+      // Clear input
+      chatInput.value = '';
+    }
+
+    // Display received message
+    function displayMessage(data, isOwn = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'chat-message' + (isOwn ? ' own' : '');
+      
+      const time = new Date(data.timestamp).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      
+      const senderId = data.senderId ? data.senderId.substring(0, 8) : 'Unknown';
+      
+      messageDiv.innerHTML = `
+        <div class="sender">${isOwn ? 'You' : 'User ' + senderId}</div>
+        <div class="text">${escapeHtml(data.text)}</div>
+        <div class="time">${time}</div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Show notification badge if chat is closed
+      if (!isChatOpen && !isOwn) {
+        unreadMessages++;
+        chatBadge.textContent = unreadMessages;
+        chatBadge.style.display = 'flex';
+      }
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

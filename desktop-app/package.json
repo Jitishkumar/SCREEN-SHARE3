@@ -1,0 +1,42 @@
+{
+  "name": "screenshare-pro-desktop",
+  "version": "1.0.0",
+  "description": "Undetectable screen sharing for Mac - Desktop app",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
+  },
+  "keywords": [
+    "screen-share",
+    "webrtc",
+    "electron",
+    "undetectable"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^28.0.0",
+    "socket.io-client": "^4.7.2",
+    "simple-peer": "^9.11.1"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.screenshare.pro",
+    "productName": "ScreenShare Pro",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": "dmg",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
