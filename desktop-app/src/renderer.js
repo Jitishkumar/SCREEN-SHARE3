@@ -66,7 +66,9 @@ window.selectSource = async function(sourceId) {
 
     // ANTI-DETECTION: Use Electron's desktopCapturer instead of browser API
     // This bypasses all browser-based detection methods
-    stream = await navigator.mediaDevices.getUserMedia({
+    
+    // Capture video
+    const videoStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
       video: {
         mandatory: {
@@ -79,6 +81,30 @@ window.selectSource = async function(sourceId) {
         }
       }
     });
+
+    // Capture system audio (separate)
+    // Note: On macOS, this captures the screen audio if available
+    try {
+      audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          mandatory: {
+            chromeMediaSource: 'desktop',
+            chromeMediaSourceId: sourceId
+          }
+        },
+        video: false
+      });
+      console.log('✅ Audio captured');
+    } catch (audioError) {
+      console.log('⚠️ Audio capture not available:', audioError.message);
+      audioStream = null;
+    }
+
+    // Combine video and audio into one stream
+    stream = new MediaStream([
+      ...videoStream.getVideoTracks(),
+      ...(audioStream ? audioStream.getAudioTracks() : [])
+    ]);
 
     updateStatus('✅ Screen capture ready! Waiting for mobile connection...', 'success');
     startBtn.disabled = false;
